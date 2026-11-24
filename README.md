@@ -1,18 +1,10 @@
-# Replicated Inventory Lab
-
-A small Python simulation of an inventory system with one primary replica and one secondary replica. Writes go to the primary and are then propagated to the secondary. A client can read stock from either replica.
-
-No third-party packages are required. Python 3.9 or newer is enough.
+# Replicated Inventory
 
 ## Run
-
-From this directory:
 
 ```bash
 python3 inventory.py
 ```
-
-The program prints three sections: replication, a stale read while replication is paused, and convergence after replication resumes.
 
 ## Architecture
 
@@ -29,14 +21,9 @@ The program prints three sections: replication, a stale read while replication i
                    Client
 ```
 
-- The client sends inventory updates to the primary.
-- The primary applies the new stock value, then propagates it to the secondary.
-- The client may read from the primary or the secondary.
-- While propagation is paused, the secondary keeps the last value it received.
+The client writes to the primary. The primary propagates the new stock value to the secondary. The client can read from either replica.
 
-## Evidence
-
-Output of `python3 inventory.py`:
+## Replication
 
 ```text
 ============================================================
@@ -51,7 +38,13 @@ Output of `python3 inventory.py`:
   client read primary: stock = 15
   client read secondary: stock = 15
   replicas match: True
+```
 
+The primary receives 15, the secondary receives 15, and both reads return 15.
+
+## Stale read
+
+```text
 ============================================================
 2. Stale read
 ============================================================
@@ -64,7 +57,13 @@ Output of `python3 inventory.py`:
   primary returns 9
   secondary returns 10 (stale)
   stale read observed: True
+```
 
+Replication is paused. The primary returns 9. The secondary still returns 10.
+
+## Recovery and convergence
+
+```text
 ============================================================
 3. Recovery and convergence
 ============================================================
@@ -78,11 +77,7 @@ Output of `python3 inventory.py`:
   replicas match: True
 ```
 
-Replication: the primary accepts `stock = 15` and the secondary receives the same value. Both reads return 15.
-
-Stale read: replication is paused and the primary is updated from 10 to 9. The primary returns 9. The secondary still returns 10.
-
-Convergence: replication resumes, the secondary applies 9, and both replicas return 9.
+After replication resumes, the secondary updates to 9 and both replicas return 9.
 
 ## Reflection
 
